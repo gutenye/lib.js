@@ -53,12 +53,15 @@ export async function request(
 }
 
 export function createRequest(baseUrl: string) {
-  return async function request(input: FetchArgs[0], options?: FetchArgs[1]) {
+  return async function requestWrapper(
+    input: FetchArgs[0],
+    options?: FetchArgs[1],
+  ) {
     const newInput =
       typeof input === 'string' && input.startsWith('/')
         ? `${baseUrl}${input}`
         : input
-    return fetch(newInput, options)
+    return request(newInput, options)
   }
 }
 
