@@ -1,4 +1,5 @@
 /*
+From: https://github.com/lodash/lodash/tree/es
 Features
 	- compatible with lodash
 */
@@ -26,5 +27,20 @@ export function isString(value: unknown): value is string {
 export function isPlainObject(
   value: unknown,
 ): value is Record<string, unknown> {
-  return value !== null && typeof value === 'object' && !Array.isArray(value)
+  if (!(value !== null && typeof value === 'object')) {
+    return false
+  }
+  const proto = Object.getPrototypeOf(value)
+  if (proto === null) {
+    return true
+  }
+  const Ctor =
+    Object.prototype.hasOwnProperty.call(proto, 'constructor') &&
+    proto.constructor
+  return (
+    typeof Ctor === 'function' &&
+    Ctor instanceof Ctor &&
+    Function.prototype.toString.call(Ctor) ===
+      Function.prototype.toString.call(Object)
+  )
 }
