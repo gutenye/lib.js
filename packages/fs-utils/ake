@@ -1,0 +1,21 @@
+#!/usr/bin/env script.js
+
+const { PROJECT_DIR } = ENV
+
+app.name(ENV.PROJECT_NAME).installCompletion({ overwrite: true })
+
+const test = app
+  .command('test')
+  .alias('t')
+  .description('Test')
+  .action(async () => {
+    await $$`bun run test`
+  })
+
+test
+  .command('watch')
+  .alias('w')
+  .description('Watch mode')
+  .action(async () => {
+    await $$`bun run test --watch`
+  })

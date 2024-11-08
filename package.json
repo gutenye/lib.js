@@ -1,0 +1,16 @@
+{
+  "name": "@gutenye/lib.js",
+  "workspaces": ["packages/*"],
+  "type": "module",
+  "scripts": {
+    "test": "bun test",
+    "lint": "biome check",
+    "lint:ci": "biome ci --reporter=github"
+  },
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5.0.0"
+  }
+}
