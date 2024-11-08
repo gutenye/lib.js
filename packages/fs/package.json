@@ -1,7 +1,4 @@
 {
-  "name": "@gutenye/fs",
-  "description": "Guten's fs - a drop-in replacement for node:fs/promises",
-  "version": "0.0.1",
   "scripts": {
     "test": "bun test",
     "lint": "biome check"

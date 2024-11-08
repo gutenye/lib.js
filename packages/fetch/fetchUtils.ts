@@ -1,15 +1,35 @@
+/*
+TODO
+
+- request body auto json stringity
+
+use isPlainObject to detect body type
+
+- createRequest supports global options
+
+createRequst(baseUrl, {
+	headers: {
+		Authorization: 'Bearer TOKEN'
+	}
+})
+
+createRequst(baseUrl, ({ body }) => ({
+	headers: {
+		Authorization: createSignature(body)
+	}
+}))
+*/
+
 export async function request(
   input: FetchArgs[0],
   { method, body, headers, ...rest }: FetchArgs[1] = {},
 ) {
   const options: FetchArgs[1] = { ...rest }
-  const newMethod = method || body ? 'POST' : undefined
-  if (newMethod) {
-    options.method = newMethod
+  if (body) {
+    options.method = method || 'POST'
   }
-  const newBody = body ? JSON.stringify(body) : undefined
-  if (newBody) {
-    options.body = newBody
+  if (body) {
+    options.body = typeof body === 'object' ? JSON.stringify(body) : body
   }
   const newHeaders =
     headers instanceof Headers ? Object.fromEntries(headers) : headers
@@ -21,10 +41,15 @@ export async function request(
   if (!res.ok) {
     const text = (await res.text()).slice(0, 200)
     throw new Error(
-      `Fetch ${res.status} ${res.statusText || ''} ${input} ${text}`,
+      `[request] ${res.status} ${res.statusText || ''} from '${input}' with '${text}'`,
     )
   }
-  return await res.json()
+  try {
+    return await res.json()
+  } catch (err) {
+    const text = (await res.text()).slice(0, 200)
+    throw new Error(`[request] Invalid JSON from '${input}' with '${text}'`)
+  }
 }
 
 export function createRequest(baseUrl: string) {

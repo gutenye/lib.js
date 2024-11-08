@@ -1,7 +1,4 @@
 {
-  "name": "@gutenye/fetch",
-  "description": "Guten's fetch utils",
-  "version": "0.0.1",
   "scripts": {
     "test": "bun test",
     "lint": "biome check"
