@@ -1,3 +1,8 @@
+/*
+Features
+	- drop-in replacment of lodash, compatible with lodash
+*/
+
 export function isString(value: unknown): value is string {
   return typeof value === 'string'
 }
