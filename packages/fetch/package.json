@@ -1,0 +1,12 @@
+{
+  "name": "@gutenye/fetch",
+  "description": "Guten's fetch utils",
+  "version": "0.0.1",
+  "scripts": {
+    "test": "bun test",
+    "lint": "biome check"
+  },
+  "devDependencies": {
+    "nock": "^14.0.0-beta.15"
+  }
+}

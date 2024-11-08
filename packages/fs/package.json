@@ -1,6 +1,6 @@
 {
-  "name": "@gutenye/fs-utils",
-  "description": "Guten's fs utils - a drop-in replacement for node:fs/promises",
+  "name": "@gutenye/fs",
+  "description": "Guten's fs - a drop-in replacement for node:fs/promises",
   "version": "0.0.1",
   "scripts": {
     "test": "bun test",
