@@ -1,5 +1,5 @@
 import { describe, expect, it, spyOn } from 'bun:test'
-import { createApi, fetch } from '../fetchUtils'
+import { createRequest, request } from '../fetchUtils'
 
 const BASE_URL = 'https://example.com'
 
@@ -12,9 +12,9 @@ spyOn(globalThis, 'fetch').mockImplementation(async (input, options) => {
   }
 })
 
-describe('fetch', () => {
+describe('request', () => {
   it('empty options', async () => {
-    expect(await fetch(BASE_URL)).toEqual([
+    expect(await request(BASE_URL)).toEqual([
       BASE_URL,
       {
         headers: { 'Content-Type': 'application/json' },
@@ -23,7 +23,7 @@ describe('fetch', () => {
   })
 
   it('with body', async () => {
-    expect(await fetch(BASE_URL, { body: { a: 1 } })).toEqual([
+    expect(await request(BASE_URL, { body: { a: 1 } })).toEqual([
       BASE_URL,
       {
         body: '{"a":1}',
@@ -34,8 +34,8 @@ describe('fetch', () => {
   })
 })
 
-describe('createApi', async () => {
-  const api = createApi(BASE_URL)
+describe('createRequest', async () => {
+  const api = createRequest(BASE_URL)
   expect(await api('/a')).toEqual([
     `${BASE_URL}/a`,
     {

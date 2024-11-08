@@ -1,4 +1,4 @@
-export async function fetch(
+export async function request(
   input: FetchArgs[0],
   { method, body, headers, ...rest }: FetchArgs[1] = {},
 ) {
@@ -27,7 +27,7 @@ export async function fetch(
   return await res.json()
 }
 
-export function createApi(baseUrl: string) {
+export function createRequest(baseUrl: string) {
   return async function request(input: FetchArgs[0], options?: FetchArgs[1]) {
     const newInput =
       typeof input === 'string' && input.startsWith('/')
