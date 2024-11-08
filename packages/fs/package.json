@@ -1,4 +1,5 @@
 {
+  "name": "@gutenye/fs",
   "scripts": {
     "test": "bun test",
     "lint": "biome check"

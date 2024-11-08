@@ -1,4 +1,5 @@
 {
+  "name": "@gutenye/fetch",
   "scripts": {
     "test": "bun test",
     "lint": "biome check"

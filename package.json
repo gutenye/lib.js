@@ -8,6 +8,7 @@
     "lint:ci": "biome ci --reporter=github"
   },
   "devDependencies": {
+    "@biomejs/biome": "^1.9.4",
     "@types/bun": "latest"
   },
   "peerDependencies": {
