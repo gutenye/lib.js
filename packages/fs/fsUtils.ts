@@ -51,6 +51,52 @@ async function outputFile(
 // emptyDir: readdirSync(dir).forEach(v => fs.rmSync(`${dir}/${v}`, { recursive: true })
 
 /**
+ * Walk dir
+ */
+
+async function* walk(dir: string): AsyncGenerator<string> {
+  for await (const d of await fs.opendir(dir)) {
+    console.log({ dir, d })
+    const entry = nodePath.join(dir, d.name)
+    if (d.isDirectory()) yield* walk(entry)
+    else if (d.isFile()) yield entry
+  }
+}
+
+/**
+ * - uses inputFile
+ */
+async function inputJson(input: ReadFileArgs[0], options?: ReadFileArgs[1]) {
+  const text = await inputFile(input, options)
+  if (!text) {
+    return
+  }
+  try {
+    return JSON.parse(text)
+  } catch (error) {
+    if (error instanceof Error) {
+      throw new Error(`[inputJson] ${error.message} from '${input}'`)
+    }
+    throw error
+  }
+}
+
+/*
+ * - uses readFile
+ */
+async function readJson(input: ReadFileArgs[0], options?: ReadFileArgs[1]) {
+  const text = await fs.readFile(input, options)
+  try {
+    return JSON.parse(text)
+  } catch (error) {
+    if (error instanceof Error) {
+      throw new Error(`[readJson] ${error.message} from '${input}'`)
+    }
+    throw error
+  }
+}
+
+/**
  * TS check if error is a Node Error
  */
 function isNodeError(error: unknown): error is NodeJS.ErrnoException {
@@ -66,4 +112,7 @@ export default {
   inputFile,
   outputFile,
   isNodeError,
+  readJson,
+  inputJson,
+  walk,
 }

@@ -4,7 +4,7 @@ Features
 	- compatible with lodash
 */
 
-/* new methods */
+/* New methods */
 
 export async function findAsync<T>(
   items: T[],

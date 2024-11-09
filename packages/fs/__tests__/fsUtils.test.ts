@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, expect, it, mock } from 'bun:test'
+import { afterEach, beforeEach, describe, expect, it, mock } from 'bun:test'
 import nodeFs from 'node:fs/promises'
 import Memfs, { vol } from 'memfs'
 import fsUtils from '../fsUtils'
@@ -12,6 +12,7 @@ mock.module('node:fs/promises', () => ({ default: menfs }))
 beforeEach(() => {
   vol.fromJSON({
     '/a.txt': 'a.txt',
+    '/a.json': '{"a":1}',
   })
 })
 
@@ -19,28 +20,88 @@ afterEach(() => {
   vol.reset()
 })
 
-it('pathExists: none-exist', async () => {
-  expect(await fsUtils.pathExists('/none-exist/a.txt')).toBeFalsy()
+describe('pathExists', () => {
+  it('pathExists: none-exist', async () => {
+    expect(await fsUtils.pathExists('/none-exist/a.txt')).toBeFalsy()
+  })
+
+  it('pathExists: exist', async () => {
+    expect(await fsUtils.pathExists('/a.txt')).toBeTruthy()
+  })
 })
 
-it('pathExists: exist', async () => {
-  expect(await fsUtils.pathExists('/a.txt')).toBeTruthy()
+describe('inputFile', () => {
+  it('inputFile: none-exist', async () => {
+    expect(await fsUtils.inputFile('/none-exist/a.txt', 'utf8')).toBeUndefined()
+  })
+
+  it('inputFile: exist', async () => {
+    expect(await fsUtils.inputFile('/a.txt', 'utf8')).toEqual('a.txt')
+  })
 })
 
-it('inputFile: none-exist', async () => {
-  expect(await fsUtils.inputFile('/none-exist/a.txt', 'utf8')).toBeUndefined()
+describe('outputFile', () => {
+  it('outputFile: none-exist', async () => {
+    await fsUtils.outputFile('/none-exist/a.txt', 'new')
+    expect(await nodeFs.readFile('/none-exist/a.txt', 'utf8')).toEqual('new')
+  })
+
+  it('outputFile: exist', async () => {
+    await fsUtils.outputFile('/a.txt', 'new')
+    expect(await nodeFs.readFile('/a.txt', 'utf8')).toEqual('new')
+  })
 })
 
-it('inputFile: exist', async () => {
-  expect(await fsUtils.inputFile('/a.txt', 'utf8')).toEqual('a.txt')
+describe('inputJson', () => {
+  it('file not exist', async () => {
+    expect(await fsUtils.inputJson('/none-exist/a.json')).toBeUndefined()
+  })
+  it('file exist', async () => {
+    expect(await fsUtils.inputJson('/a.json')).toEqual({ a: 1 })
+  })
+  it('invalid json', async () => {
+    await expect(() => fsUtils.inputJson('/a.txt')).toThrow(
+      `[inputJson] JSON Parse error: Unexpected identifier "a" from '/a.txt'`,
+    )
+  })
 })
 
-it('outputFile: none-exist', async () => {
-  await fsUtils.outputFile('/none-exist/a.txt', 'new')
-  expect(await nodeFs.readFile('/none-exist/a.txt', 'utf8')).toEqual('new')
+describe('readJson', () => {
+  it('file not exist', async () => {
+    await expect(() => fsUtils.readJson('/none-exist/a.json')).toThrow(
+      `ENOENT: no such file or directory, open '/none-exist/a.json'`,
+    )
+  })
+  it('file exist', async () => {
+    expect(await fsUtils.readJson('/a.json')).toEqual({ a: 1 })
+  })
+  it('invalid json', async () => {
+    await expect(() => fsUtils.readJson('/a.txt')).toThrow(
+      `[readJson] JSON Parse error: Unexpected identifier "a" from '/a.txt'`,
+    )
+  })
 })
 
-it('outputFile: exist', async () => {
-  await fsUtils.outputFile('/a.txt', 'new')
-  expect(await nodeFs.readFile('/a.txt', 'utf8')).toEqual('new')
+/*
+describe('walk', async () => {
+  vol.fromJSON({
+    '/dir/a.txt': '',
+    '/dir/sub/b.txt': '',
+  })
+
+  const entries = []
+  for await (const entry of fsUtils.walk('/dir')) {
+    entries.push(entry)
+  }
+  expect(entries).toEqual([
+    {
+      path: '/dir/sub/b.txt',
+      relativePath: 'sub/b.txt',
+      dir: '/dir/sub',
+      base: 'b.txt',
+      name: 'b',
+      ext: '.txt',
+    },
+  ])
 })
+  */
