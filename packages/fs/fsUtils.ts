@@ -103,7 +103,7 @@ async function readJson(input: ReadFileArgs[0], options?: ReadFileArgs[1]) {
 /**
  * isSymlink
  */
-async function isSymlink(input: LstatArgs[0]) {
+async function isSymlink(input: PathLike) {
   const stat = await lstatSafe(input)
   return stat ? stat.isSymbolicLink() : false
 }
@@ -111,7 +111,7 @@ async function isSymlink(input: LstatArgs[0]) {
 /**
  * isFile
  */
-async function isFile(input: LstatArgs[0]) {
+async function isFile(input: PathLike) {
   const stat = await lstatSafe(input)
   return stat ? stat.isFile() : false
 }
@@ -119,7 +119,7 @@ async function isFile(input: LstatArgs[0]) {
 /**
  * isDir
  */
-async function isDir(input: LstatArgs[0]) {
+async function isDir(input: PathLike) {
   const stat = await lstatSafe(input)
   return stat ? stat.isDirectory() : false
 }
@@ -132,7 +132,7 @@ function isNodeError(error: unknown): error is NodeJS.ErrnoException {
 }
 
 // ignore ENOENT
-async function lstatSafe(input: LstatArgs[0]) {
+async function lstatSafe(input: PathLike) {
   try {
     return await fs.lstat(cleanPath(input))
   } catch (error) {
@@ -173,9 +173,37 @@ export function cleanPath(path: any) {
   return removeTrailingSlash(expand(path))
 }
 
+async function remove(path: PathLike) {
+  return fs.rm(cleanPath(path), { recursive: true, force: true })
+}
+
+async function copy() {
+  throw new Error('NotImplmeented')
+}
+
+async function move(rawSrc: PathLike, rawDest: PathLike) {
+  const src = cleanPath(rawSrc)
+  const dest = cleanPath(rawDest)
+  await makeMissingDirs(dest)
+  return fs.rename(src, dest)
+}
+
+async function makeMissingDirs(rawPath: PathLike) {
+  if (typeof rawPath !== 'string') {
+    return
+  }
+  const path = cleanPath(rawPath)
+  const parent = nodePath.dirname(path)
+  return mkdirp(parent)
+}
+
+async function mkdirp(path: PathLike) {
+  return fs.mkdir(path, { recursive: true })
+}
+
 type WriteFileArgs = Parameters<typeof fs.writeFile>
 type ReadFileArgs = Parameters<typeof fs.readFile>
-type LstatArgs = Parameters<typeof fs.lstat>
+type PathLike = Parameters<typeof fs.lstat>[0]
 
 export default {
   ...fs,
@@ -191,4 +219,8 @@ export default {
   isFile,
   isDir,
   isSymlink,
+  remove,
+  copy,
+  move,
+  mkdirp,
 }

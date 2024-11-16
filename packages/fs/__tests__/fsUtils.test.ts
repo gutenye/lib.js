@@ -1,24 +1,28 @@
 import { afterEach, beforeEach, describe, expect, it, mock } from 'bun:test'
 import nodeFs from 'node:fs/promises'
 import Memfs, { vol } from 'memfs'
-import fsUtils from '../fsUtils'
+import fsUtils, { cleanPath } from '../fsUtils'
 
 const memfs = Memfs.fs.promises
 
 mock.module('node:fs/promises', () => ({ default: memfs }))
-mock.module('node:os', () => ({ default: { homedir: () => 'HOME' } }))
+mock.module('node:os', () => ({ default: { homedir: () => '/HOME' } }))
 
 beforeEach(async () => {
   vol.fromNestedJSON({
-    '/a.txt': 'a.txt',
-    '/a.json': '{"a":1}',
     '/file': 'file',
+    '/a.json': '{"a":1}',
     '/dir': {
-      'dir-file': 'dir-file',
+      file: 'dir/file',
+    },
+    '/HOME': {
+      file: 'HOME/file',
+      dir: {},
     },
   })
   await memfs.symlink('/dir', '/symlink')
   await memfs.symlink('/file', '/symlink-file')
+  await memfs.symlink('/dir', '/HOME/symlink')
 })
 
 afterEach(() => {
@@ -26,35 +30,62 @@ afterEach(() => {
 })
 
 describe('pathExists', () => {
-  it('pathExists: none-exist', async () => {
-    expect(await fsUtils.pathExists('/none-exist/a.txt')).toBeFalsy()
-  })
-
-  it('pathExists: exist', async () => {
-    expect(await fsUtils.pathExists('/a.txt')).toBeTruthy()
-  })
+  for (const [fixture, expected] of [
+    ['/file', true],
+    ['/dir', true],
+    ['~/file/', true],
+    ['/none-exist', false],
+  ] as const) {
+    it(fixture, async () => {
+      expect(await fsUtils.pathExists(fixture)).toEqual(expected)
+    })
+  }
 })
 
 describe('inputFile', () => {
-  it('inputFile: none-exist', async () => {
-    expect(await fsUtils.inputFile('/none-exist/a.txt', 'utf8')).toBeUndefined()
-  })
-
-  it('inputFile: exist', async () => {
-    expect(await fsUtils.inputFile('/a.txt', 'utf8')).toEqual('a.txt')
-  })
+  for (const [fixture, expected] of [
+    ['/file', 'file'],
+    [
+      '/dir',
+      new Error("EISDIR: illegal operation on a directory, open '/dir'"),
+    ],
+    ['~/file/', 'HOME/file'],
+    ['/none-exist', undefined],
+  ] as const) {
+    it(fixture, async () => {
+      if (expected instanceof Error) {
+        await expect(fsUtils.inputFile(fixture, 'utf8')).rejects.toThrow(
+          expected.message,
+        )
+      } else {
+        const received = await fsUtils.inputFile(fixture, 'utf8')
+        expect<typeof received>(received).toEqual(expected)
+      }
+    })
+  }
 })
 
 describe('outputFile', () => {
-  it('outputFile: none-exist', async () => {
-    await fsUtils.outputFile('/none-exist/a.txt', 'new')
-    expect(await nodeFs.readFile('/none-exist/a.txt', 'utf8')).toEqual('new')
-  })
-
-  it('outputFile: exist', async () => {
-    await fsUtils.outputFile('/a.txt', 'new')
-    expect(await nodeFs.readFile('/a.txt', 'utf8')).toEqual('new')
-  })
+  for (const [fixture, expected] of [
+    ['/file', 'file'],
+    [
+      '/dir',
+      new Error("EISDIR: illegal operation on a directory, open '/dir'"),
+    ],
+    ['~/file/', 'HOME/file'],
+    ['/none-exist-dir/a', undefined],
+  ] as const) {
+    it(fixture, async () => {
+      if (expected instanceof Error) {
+        await expect(fsUtils.outputFile(fixture, 'utf8')).rejects.toThrow(
+          expected.message,
+        )
+      } else {
+        await fsUtils.outputFile(fixture, 'new')
+        expect(await nodeFs.readFile(cleanPath(fixture), 'utf8')).toEqual('new')
+      }
+    })
+  }
 })
 
 describe('inputJson', () => {
@@ -65,15 +96,15 @@ describe('inputJson', () => {
     expect(await fsUtils.inputJson('/a.json')).toEqual({ a: 1 })
   })
   it('invalid json', async () => {
-    await expect(() => fsUtils.inputJson('/a.txt')).toThrow(
-      `[inputJson] JSON Parse error: Unexpected identifier "a" from '/a.txt'`,
+    await expect(fsUtils.inputJson('/file')).rejects.toThrow(
+      `[inputJson] JSON Parse error: Unexpected identifier "file" from '/file'`,
     )
   })
 })
 
 describe('readJson', () => {
   it('file not exist', async () => {
-    await expect(() => fsUtils.readJson('/none-exist/a.json')).toThrow(
+    await expect(fsUtils.readJson('/none-exist/a.json')).rejects.toThrow(
       `ENOENT: no such file or directory, open '/none-exist/a.json'`,
     )
   })
@@ -81,8 +112,8 @@ describe('readJson', () => {
     expect(await fsUtils.readJson('/a.json')).toEqual({ a: 1 })
   })
   it('invalid json', async () => {
-    await expect(() => fsUtils.readJson('/a.txt')).toThrow(
-      `[readJson] JSON Parse error: Unexpected identifier "a" from '/a.txt'`,
+    await expect(fsUtils.readJson('/file')).rejects.toThrow(
+      `[readJson] JSON Parse error: Unexpected identifier "file" from '/file'`,
     )
   })
 })
@@ -90,6 +121,7 @@ describe('readJson', () => {
 describe('isFile', () => {
   for (const [fixture, expected] of [
     ['/file', true],
+    ['~/file/', true],
     ['/dir', false],
     ['/not-exists', false],
   ] as const) {
@@ -102,6 +134,7 @@ describe('isFile', () => {
 describe('isDir', () => {
   for (const [fixture, expected] of [
     ['/dir', true],
+    ['~/dir/', true],
     ['/file', false],
     ['/not-exists', false],
   ] as const) {
@@ -115,6 +148,7 @@ describe('isSymlink', () => {
   for (const [fixture, expected] of [
     ['/symlink', true],
     ['/symlink/', true], // false in node, memfs is different
+    ['~/symlink/', true],
     ['/symlink-file/', true],
     ['/file', false],
     ['/not-exists', false],
@@ -129,11 +163,11 @@ describe('expand', () => {
   const buffer = Buffer.from('a')
   const url = new URL('https://a.com')
   for (const [fixture, expected] of [
-    ['~', 'HOME'],
-    ['~/a', 'HOME/a'],
-    ['~/~/a', 'HOME/~/a'],
+    ['~', '/HOME'],
+    ['~/a', '/HOME/a'],
+    ['~/~/a', '/HOME/~/a'],
     ['a/~', 'a/~'],
-    ['~/trailing-slash/', 'HOME/trailing-slash/'],
+    ['~/trailing-slash/', '/HOME/trailing-slash/'],
     ['a', 'a'],
     [buffer, buffer],
     [url, url],
@@ -159,10 +193,18 @@ describe('cleanPath', () => {
   }
 })
 
+describe('remove', () => {
+  for (const [fixture] of [['/file'], ['/dir'], ['/not-exist']]) {
+    it(fixture, async () => {
+      expect(await fsUtils.remove(fixture)).toBeUndefined()
+    })
+  }
+})
+
 /*
 describe('walk', async () => {
   vol.fromJSON({
-    '/dir/a.txt': '',
+    '/dir/file': '',
     '/dir/sub/b.txt': '',
   })
 
