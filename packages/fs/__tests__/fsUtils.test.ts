@@ -3,17 +3,20 @@ import nodeFs from 'node:fs/promises'
 import Memfs, { vol } from 'memfs'
 import fsUtils from '../fsUtils'
 
-const menfs = Memfs.fs.promises
+const memfs = Memfs.fs.promises
 
-const { ...a } = nodeFs
+mock.module('node:fs/promises', () => ({ default: memfs }))
 
-mock.module('node:fs/promises', () => ({ default: menfs }))
-
-beforeEach(() => {
-  vol.fromJSON({
+beforeEach(async () => {
+  vol.fromNestedJSON({
     '/a.txt': 'a.txt',
     '/a.json': '{"a":1}',
+    '/file': 'file',
+    '/dir': {
+      'dir-file': 'dir-file',
+    },
   })
+  await memfs.symlink('/file', '/symlink')
 })
 
 afterEach(() => {
@@ -79,6 +82,42 @@ describe('readJson', () => {
     await expect(() => fsUtils.readJson('/a.txt')).toThrow(
       `[readJson] JSON Parse error: Unexpected identifier "a" from '/a.txt'`,
     )
+  })
+})
+
+describe('isFile', () => {
+  it('true', async () => {
+    expect(await fsUtils.isFile('/file')).toBeTruthy()
+  })
+  it('false', async () => {
+    expect(await fsUtils.isFile('/dir')).toBeFalsy()
+  })
+  it('not exists', async () => {
+    expect(await fsUtils.isFile('/not-exists')).toBeFalsy()
+  })
+})
+
+describe('isDir', () => {
+  it('true', async () => {
+    expect(await fsUtils.isDir('/dir')).toBeTruthy()
+  })
+  it('false', async () => {
+    expect(await fsUtils.isDir('/file')).toBeFalsy()
+  })
+  it('not exists', async () => {
+    expect(await fsUtils.isDir('/not-exists')).toBeFalsy()
+  })
+})
+
+describe('isSymlink', () => {
+  it('true', async () => {
+    expect(await fsUtils.isSymlink('/symlink')).toBeTruthy()
+  })
+  it('false', async () => {
+    expect(await fsUtils.isSymlink('/file')).toBeFalsy()
+  })
+  it('not exists', async () => {
+    expect(await fsUtils.isSymlink('/not-exists')).toBeFalsy()
   })
 })
 

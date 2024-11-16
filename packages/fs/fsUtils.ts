@@ -97,14 +97,51 @@ async function readJson(input: ReadFileArgs[0], options?: ReadFileArgs[1]) {
 }
 
 /**
+ * isSymlink
+ */
+async function isSymlink(input: LstatArgs[0]) {
+  const stat = await lstatSafe(input)
+  return stat ? stat.isSymbolicLink() : false
+}
+
+/**
+ * isFile
+ */
+async function isFile(input: LstatArgs[0]) {
+  const stat = await lstatSafe(input)
+  return stat ? stat.isFile() : false
+}
+
+/**
+ * isDir
+ */
+async function isDir(input: LstatArgs[0]) {
+  const stat = await lstatSafe(input)
+  return stat ? stat.isDirectory() : false
+}
+
+/**
  * TS check if error is a Node Error
  */
 function isNodeError(error: unknown): error is NodeJS.ErrnoException {
   return error instanceof Error && 'code' in error
 }
 
+// ignore ENOENT
+async function lstatSafe(input: LstatArgs[0]) {
+  try {
+    return await fs.lstat(input)
+  } catch (error) {
+    if (isNodeError(error) && error.code === 'ENOENT') {
+      return
+    }
+    throw error
+  }
+}
+
 type WriteFileArgs = Parameters<typeof fs.writeFile>
 type ReadFileArgs = Parameters<typeof fs.readFile>
+type LstatArgs = Parameters<typeof fs.lstat>
 
 export default {
   ...fs,
@@ -115,4 +152,7 @@ export default {
   readJson,
   inputJson,
   walk,
+  isFile,
+  isDir,
+  isSymlink,
 }
