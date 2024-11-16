@@ -9,7 +9,7 @@ import nodePath from 'node:path'
  */
 async function pathExists(path: string) {
   try {
-    await fs.access(expand(path))
+    await fs.access(cleanPath(path))
     return true
   } catch (error) {
     if (isNodeError(error) && error.code === 'ENOENT') {
@@ -26,7 +26,7 @@ export async function inputFile(
   options?: ReadFileArgs[1],
 ) {
   try {
-    return await fs.readFile(expand(path), options)
+    return await fs.readFile(cleanPath(path), options)
   } catch (error) {
     if (isNodeError(error) && error.code === 'ENOENT') {
       return
@@ -43,7 +43,7 @@ async function outputFile(
   data: WriteFileArgs[1],
   options?: WriteFileArgs[2],
 ) {
-  const path = expand(rawPath)
+  const path = cleanPath(rawPath)
   if (typeof path === 'string') {
     const dir = nodePath.dirname(path)
     await fs.mkdir(dir, { recursive: true })
@@ -59,7 +59,7 @@ async function outputFile(
  */
 
 async function* walk(rawDir: string): AsyncGenerator<string> {
-  const dir = expand(rawDir)
+  const dir = cleanPath(rawDir)
   for await (const d of await fs.opendir(dir)) {
     const entry = nodePath.join(dir, d.name)
     if (d.isDirectory()) yield* walk(entry)
@@ -71,7 +71,7 @@ async function* walk(rawDir: string): AsyncGenerator<string> {
  * - uses inputFile
  */
 async function inputJson(input: ReadFileArgs[0], options?: ReadFileArgs[1]) {
-  const text = await inputFile(expand(input), options)
+  const text = await inputFile(cleanPath(input), options)
   if (!text) {
     return
   }
@@ -89,7 +89,7 @@ async function inputJson(input: ReadFileArgs[0], options?: ReadFileArgs[1]) {
  * - uses readFile
  */
 async function readJson(input: ReadFileArgs[0], options?: ReadFileArgs[1]) {
-  const text = await fs.readFile(expand(input), options)
+  const text = await fs.readFile(cleanPath(input), options)
   try {
     return JSON.parse(text)
   } catch (error) {
@@ -134,7 +134,7 @@ function isNodeError(error: unknown): error is NodeJS.ErrnoException {
 // ignore ENOENT
 async function lstatSafe(input: LstatArgs[0]) {
   try {
-    return await fs.lstat(expand(input))
+    return await fs.lstat(cleanPath(input))
   } catch (error) {
     if (isNodeError(error) && error.code === 'ENOENT') {
       return
@@ -162,6 +162,17 @@ export function expand(path: any) {
   return path
 }
 
+export function removeTrailingSlash(path: any) {
+  if (!path || typeof path !== 'string') {
+    return path
+  }
+  return path.replace(/[\\/]+$/, '')
+}
+
+export function cleanPath(path: any) {
+  return removeTrailingSlash(expand(path))
+}
+
 type WriteFileArgs = Parameters<typeof fs.writeFile>
 type ReadFileArgs = Parameters<typeof fs.readFile>
 type LstatArgs = Parameters<typeof fs.lstat>
@@ -170,6 +181,7 @@ export default {
   ...fs,
   pathExists,
   expand,
+  cleanPath,
   inputFile,
   outputFile,
   isNodeError,

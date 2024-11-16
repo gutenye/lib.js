@@ -17,7 +17,8 @@ beforeEach(async () => {
       'dir-file': 'dir-file',
     },
   })
-  await memfs.symlink('/file', '/symlink')
+  await memfs.symlink('/dir', '/symlink')
+  await memfs.symlink('/file', '/symlink-file')
 })
 
 afterEach(() => {
@@ -87,39 +88,41 @@ describe('readJson', () => {
 })
 
 describe('isFile', () => {
-  it('true', async () => {
-    expect(await fsUtils.isFile('/file')).toBeTruthy()
-  })
-  it('false', async () => {
-    expect(await fsUtils.isFile('/dir')).toBeFalsy()
-  })
-  it('not exists', async () => {
-    expect(await fsUtils.isFile('/not-exists')).toBeFalsy()
-  })
+  for (const [fixture, expected] of [
+    ['/file', true],
+    ['/dir', false],
+    ['/not-exists', false],
+  ] as const) {
+    it(fixture, async () => {
+      expect(await fsUtils.isFile(fixture)).toEqual(expected)
+    })
+  }
 })
 
 describe('isDir', () => {
-  it('true', async () => {
-    expect(await fsUtils.isDir('/dir')).toBeTruthy()
-  })
-  it('false', async () => {
-    expect(await fsUtils.isDir('/file')).toBeFalsy()
-  })
-  it('not exists', async () => {
-    expect(await fsUtils.isDir('/not-exists')).toBeFalsy()
-  })
+  for (const [fixture, expected] of [
+    ['/dir', true],
+    ['/file', false],
+    ['/not-exists', false],
+  ] as const) {
+    it(fixture, async () => {
+      expect(await fsUtils.isDir(fixture)).toEqual(expected)
+    })
+  }
 })
 
 describe('isSymlink', () => {
-  it('true', async () => {
-    expect(await fsUtils.isSymlink('/symlink')).toBeTruthy()
-  })
-  it('false', async () => {
-    expect(await fsUtils.isSymlink('/file')).toBeFalsy()
-  })
-  it('not exists', async () => {
-    expect(await fsUtils.isSymlink('/not-exists')).toBeFalsy()
-  })
+  for (const [fixture, expected] of [
+    ['/symlink', true],
+    ['/symlink/', true], // false in node, memfs is different
+    ['/symlink-file/', true],
+    ['/file', false],
+    ['/not-exists', false],
+  ] as const) {
+    it(fixture, async () => {
+      expect(await fsUtils.isSymlink(fixture)).toEqual(expected)
+    })
+  }
 })
 
 describe('expand', () => {
@@ -139,6 +142,19 @@ describe('expand', () => {
   ]) {
     it(String(fixture), () => {
       expect(fsUtils.expand(fixture)).toEqual(expected)
+    })
+  }
+})
+
+describe('cleanPath', () => {
+  for (const [fixture, expected] of [
+    ['a/b', 'a/b'],
+    ['a/b/', 'a/b'],
+    ['a//b//', 'a//b'],
+    ['a\\b\\', 'a\\b'],
+  ]) {
+    it(fixture, () => {
+      expect(fsUtils.cleanPath(fixture)).toEqual(expected)
     })
   }
 })
