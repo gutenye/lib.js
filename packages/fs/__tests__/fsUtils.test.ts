@@ -6,6 +6,7 @@ import fsUtils from '../fsUtils'
 const memfs = Memfs.fs.promises
 
 mock.module('node:fs/promises', () => ({ default: memfs }))
+mock.module('node:os', () => ({ default: { homedir: () => 'HOME' } }))
 
 beforeEach(async () => {
   vol.fromNestedJSON({
@@ -119,6 +120,27 @@ describe('isSymlink', () => {
   it('not exists', async () => {
     expect(await fsUtils.isSymlink('/not-exists')).toBeFalsy()
   })
+})
+
+describe('expand', () => {
+  const buffer = Buffer.from('a')
+  const url = new URL('https://a.com')
+  for (const [fixture, expected] of [
+    ['~', 'HOME'],
+    ['~/a', 'HOME/a'],
+    ['~/~/a', 'HOME/~/a'],
+    ['a/~', 'a/~'],
+    ['~/trailing-slash/', 'HOME/trailing-slash/'],
+    ['a', 'a'],
+    [buffer, buffer],
+    [url, url],
+    [undefined, undefined],
+    [true, true],
+  ]) {
+    it(String(fixture), () => {
+      expect(fsUtils.expand(fixture)).toEqual(expected)
+    })
+  }
 })
 
 /*

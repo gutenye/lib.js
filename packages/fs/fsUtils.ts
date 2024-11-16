@@ -1,4 +1,5 @@
 import fs from 'node:fs/promises'
+import os from 'node:os'
 import nodePath from 'node:path'
 
 /**
@@ -6,7 +7,7 @@ import nodePath from 'node:path'
  */
 async function pathExists(path: string) {
   try {
-    await fs.access(path)
+    await fs.access(expand(path))
     return true
   } catch (error) {
     if (isNodeError(error) && error.code === 'ENOENT') {
@@ -23,7 +24,7 @@ export async function inputFile(
   options?: ReadFileArgs[1],
 ) {
   try {
-    return await fs.readFile(path, options)
+    return await fs.readFile(expand(path), options)
   } catch (error) {
     if (isNodeError(error) && error.code === 'ENOENT') {
       return
@@ -36,10 +37,11 @@ export async function inputFile(
  * - Auto create missing dirs
  */
 async function outputFile(
-  path: WriteFileArgs[0],
+  rawPath: WriteFileArgs[0],
   data: WriteFileArgs[1],
   options?: WriteFileArgs[2],
 ) {
+  const path = expand(rawPath)
   if (typeof path === 'string') {
     const dir = nodePath.dirname(path)
     await fs.mkdir(dir, { recursive: true })
@@ -54,9 +56,9 @@ async function outputFile(
  * Walk dir
  */
 
-async function* walk(dir: string): AsyncGenerator<string> {
+async function* walk(rawDir: string): AsyncGenerator<string> {
+  const dir = expand(rawDir)
   for await (const d of await fs.opendir(dir)) {
-    console.log({ dir, d })
     const entry = nodePath.join(dir, d.name)
     if (d.isDirectory()) yield* walk(entry)
     else if (d.isFile()) yield entry
@@ -67,7 +69,7 @@ async function* walk(dir: string): AsyncGenerator<string> {
  * - uses inputFile
  */
 async function inputJson(input: ReadFileArgs[0], options?: ReadFileArgs[1]) {
-  const text = await inputFile(input, options)
+  const text = await inputFile(expand(input), options)
   if (!text) {
     return
   }
@@ -85,7 +87,7 @@ async function inputJson(input: ReadFileArgs[0], options?: ReadFileArgs[1]) {
  * - uses readFile
  */
 async function readJson(input: ReadFileArgs[0], options?: ReadFileArgs[1]) {
-  const text = await fs.readFile(input, options)
+  const text = await fs.readFile(expand(input), options)
   try {
     return JSON.parse(text)
   } catch (error) {
@@ -130,13 +132,32 @@ function isNodeError(error: unknown): error is NodeJS.ErrnoException {
 // ignore ENOENT
 async function lstatSafe(input: LstatArgs[0]) {
   try {
-    return await fs.lstat(input)
+    return await fs.lstat(expand(input))
   } catch (error) {
     if (isNodeError(error) && error.code === 'ENOENT') {
       return
     }
     throw error
   }
+}
+
+/**
+ * Expands a file path that starts with '~' to the absolute path of the home directory.
+ * @param {string} path - The file path to expand.
+ * @returns {string} - The expanded absolute file path.
+ */
+export function expand(path: any) {
+  if (!path || typeof path !== 'string') {
+    return path
+  }
+  const home = os.homedir()
+  if (path === '~') {
+    return home
+  }
+  if (path.startsWith('~/') || path.startsWith('~\\')) {
+    return nodePath.join(os.homedir(), path.slice(2))
+  }
+  return path
 }
 
 type WriteFileArgs = Parameters<typeof fs.writeFile>
@@ -146,6 +167,7 @@ type LstatArgs = Parameters<typeof fs.lstat>
 export default {
   ...fs,
   pathExists,
+  expand,
   inputFile,
   outputFile,
   isNodeError,
