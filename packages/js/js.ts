@@ -6,6 +6,10 @@ Features
 
 /* New methods */
 
+export async function delay(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms))
+}
+
 export async function findAsync<T>(
   items: T[],
   predicate: (item: T, index: number) => Promise<boolean>,
