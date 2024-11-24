@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, mock } from 'bun:test'
 import nodeFs from 'node:fs/promises'
 import Memfs, { vol } from 'memfs'
-import fsUtils, { cleanPath } from '../fsUtils'
+import fsUtils, { cleanPath } from '../fs'
 
 const memfs = Memfs.fs.promises
 

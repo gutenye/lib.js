@@ -1,25 +1,3 @@
-/*
-TODO
-
-- request body auto json stringity
-
-use isPlainObject to detect body type
-
-- createRequest supports global options
-
-createRequst(baseUrl, {
-	headers: {
-		Authorization: 'Bearer TOKEN'
-	}
-})
-
-createRequst(baseUrl, ({ body }) => ({
-	headers: {
-		Authorization: createSignature(body)
-	}
-}))
-*/
-
 export async function request(
   input: FetchArgs[0],
   { method, body, headers, ...rest }: FetchArgs[1] = {},
