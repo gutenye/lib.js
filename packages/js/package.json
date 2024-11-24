@@ -1,7 +1,0 @@
-{
-  "name": "@gutenye/js",
-  "scripts": {
-    "test": "bun test",
-    "lint": "biome check"
-  }
-}
