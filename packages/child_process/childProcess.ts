@@ -2,7 +2,7 @@ import { spawn } from 'node:child_process'
 
 export * from 'node:child_process'
 
-export function spawnPlus(command: SpawnArgs[0], options: SpawnArgs[2]) {
+export function spawnPlus(command: SpawnArgs[0], options?: SpawnArgs[2]) {
   let stderr = ''
   const newOptions = { shell: true, ...options }
   const child = spawn(command, newOptions)
