@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test'
-import { findAsync, isPlainObject, isString } from '../jsUtils'
+import { findAsync, isPlainObject, isString } from '../js'
 
 const IS_FIXTURES = [
   ['PlainObject', { a: 1 }],

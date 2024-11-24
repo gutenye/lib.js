@@ -1,5 +1,5 @@
 import { describe, expect, it, spyOn } from 'bun:test'
-import { createRequest, request } from '../fetchUtils'
+import { createRequest, request } from '../fetch'
 
 const BASE_URL = 'https://example.com'
 

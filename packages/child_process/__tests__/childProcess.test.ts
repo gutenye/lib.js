@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, jest, mock } from 'bun:test'
 import { EventEmitter } from 'node:events'
-import { spawnPlus } from '../childProcessUtils'
+import { spawnPlus } from '../childProcess'
 
 mock.module('node:child_process', () => ({
   spawn: mock(() => {
