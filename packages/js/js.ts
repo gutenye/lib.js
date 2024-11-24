@@ -1,11 +1,3 @@
-/*
-From: https://github.com/lodash/lodash/tree/es
-Features
-	- compatible with lodash
-*/
-
-/* New methods */
-
 export async function delay(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms))
 }
