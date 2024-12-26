@@ -3,9 +3,16 @@ import fs from './fs'
 
 // suffix name
 // a.js -> a-suffix.js
-function suffix(path: string, suffix: string) {
+function nameAddSuffix(path: string, suffix: string) {
   const { dir, name, ext } = nodePath.parse(path)
   return nodePath.join(dir, `${name}${suffix}${ext}`)
+}
+
+// replace name
+// a.js -> name.js
+function replaceName(path: string, name: string) {
+  const { dir, ext } = nodePath.parse(path)
+  return nodePath.join(dir, `${name}${ext}`)
 }
 
 /**
@@ -32,7 +39,8 @@ function hasExt(path: string, exts: string[]) {
 
 export default {
   ...nodePath,
-  suffix,
+  nameAddSuffix,
+  replaceName,
   genUniquePath,
   hasExt,
 }

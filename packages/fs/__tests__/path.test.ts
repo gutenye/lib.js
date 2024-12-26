@@ -1,6 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, mock } from 'bun:test'
 import Memfs, { vol } from 'memfs'
-import fsUtils from '../fs'
 import pathUtils from '../path'
 
 const memfs = Memfs.fs.promises
@@ -17,14 +16,26 @@ afterEach(() => {
   vol.reset()
 })
 
-describe('suffix', () => {
+describe('nameAddSuffix', () => {
   for (const [fixture, expected] of [
     ['a.txt', 'a-suffix.txt'],
     ['a', 'a-suffix'],
     ['/a.txt', '/a-suffix.txt'],
   ] as const) {
     it(fixture, async () => {
-      expect(pathUtils.suffix(fixture, '-suffix')).toEqual(expected)
+      expect(pathUtils.nameAddSuffix(fixture, '-suffix')).toEqual(expected)
+    })
+  }
+})
+
+describe('replaceName', () => {
+  for (const [fixture, expected] of [
+    ['a.txt', 'new.txt'],
+    ['a', 'new'],
+    ['/a.txt', '/new.txt'],
+  ] as const) {
+    it(fixture, async () => {
+      expect(pathUtils.replaceName(fixture, 'new')).toEqual(expected)
     })
   }
 })
