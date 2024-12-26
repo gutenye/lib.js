@@ -16,6 +16,7 @@ async function pathExists(path: string) {
     throw error
   }
 }
+
 /**
  * - file not exists: returns undefined
  */
@@ -69,7 +70,9 @@ async function* walk(rawDir: string): AsyncGenerator<string> {
  * - uses inputFile
  */
 async function inputJson(input: ReadFileArgs[0], options?: ReadFileArgs[1]) {
-  const text = await inputFile(cleanPath(input), options)
+  const text = (await inputFile(cleanPath(input), options || 'utf8')) as
+    | string
+    | undefined
   if (!text) {
     return
   }
@@ -87,7 +90,10 @@ async function inputJson(input: ReadFileArgs[0], options?: ReadFileArgs[1]) {
  * - uses readFile
  */
 async function readJson(input: ReadFileArgs[0], options?: ReadFileArgs[1]) {
-  const text = await fs.readFile(cleanPath(input), options)
+  const text = (await fs.readFile(
+    cleanPath(input),
+    options || 'utf8',
+  )) as string
   try {
     return JSON.parse(text)
   } catch (error) {
