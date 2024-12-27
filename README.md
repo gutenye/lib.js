@@ -17,11 +17,11 @@ Pick the code you need. Copy and paste the code into your project and customize 
 
 ## 📖 List of Utils
 
-- [fs](./fs/README.md)
-- [js](./js/README.md)
-- [fetch](./fetch/README.md)
-- [child_process](./child_process/README.md)
-- [raycast](./raycast/README.md)
+- [fs](./src/fs/README.md)
+- [js](./src/js/README.md)
+- [fetch](./src/fetch/README.md)
+- [child_process](./src/child_process/README.md)
+- [raycast](./src/raycast/README.md)
 
 ## 🤝 Contribute
 
