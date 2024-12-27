@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, mock } from 'bun:test'
 import nodeFs from 'node:fs/promises'
 import Memfs, { vol } from 'memfs'
-import fsUtils, { cleanPath } from '../fs'
+import fsUtils from '../fs'
 
 const memfs = Memfs.fs.promises
 
@@ -82,7 +82,9 @@ describe('outputFile', () => {
         )
       } else {
         await fsUtils.outputFile(fixture, 'new')
-        expect(await nodeFs.readFile(cleanPath(fixture), 'utf8')).toEqual('new')
+        expect(
+          await nodeFs.readFile(fsUtils.cleanPath(fixture), 'utf8'),
+        ).toEqual('new')
       }
     })
   }
