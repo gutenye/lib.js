@@ -1,0 +1,7 @@
+{
+  "name": "@libjs/raycast",
+  "private": true,
+  "dependencies": {
+    "@raycast/utils": "^1.18.1"
+  }
+}

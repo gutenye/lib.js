@@ -1,5 +1,20 @@
-#!/usr/bin/env script.js
+await mixins('package-manager', 'test')
 
-await mixins('test')
+globalThis.PACKAGE_MANAGER = 'bun'
 
-app.name(PROJECT_NAME)
+const HELP = `
+`
+
+app
+  .name(PROJECT_NAME)
+  .enableCompletion()
+  .addHelpText('after', HELP.trimEnd())
+
+app
+  .command('cmd1 [file]')
+  .description('Desc')
+  .argument('[file]', 'Desc', 'default')
+  .addArgument(new app.Argument('[file]').choices(['file1']))
+  .option('-o, --option1 [value]', 'Desc', 'default')
+  .addOption(new app.Option('--option2 [value]').choices(['value1']))
+  .action(async () => { })

@@ -20,10 +20,7 @@ async function pathExists(path: string) {
 /**
  * - file not exists: returns undefined
  */
-export async function inputFile(
-  path: ReadFileArgs[0],
-  options?: ReadFileArgs[1],
-) {
+async function inputFile(path: ReadFileArgs[0], options?: ReadFileArgs[1]) {
   try {
     return await fs.readFile(cleanPath(path), options)
   } catch (error) {
@@ -152,7 +149,7 @@ async function lstatSafe(input: PathLike) {
  * @param {string} path - The file path to expand.
  * @returns {string} - The expanded absolute file path.
  */
-export function expand(path: any) {
+function expand(path: any) {
   if (!path || typeof path !== 'string') {
     return path
   }
@@ -166,14 +163,14 @@ export function expand(path: any) {
   return path
 }
 
-export function removeTrailingSlash(path: any) {
+function removeTrailingSlash(path: any) {
   if (!path || typeof path !== 'string') {
     return path
   }
   return path.replace(/[\\/]+$/, '')
 }
 
-export function cleanPath(path: any) {
+function cleanPath(path: any) {
   return removeTrailingSlash(expand(path))
 }
 
