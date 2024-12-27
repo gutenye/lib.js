@@ -1,6 +1,6 @@
 # 🧩 LibJS 🧩
 
-[![Stars](https://img.shields.io/github/stars/gutenye/lib.js?style=social)](https://github.com/gutenye/lib.js) [![NPM Version](https://img.shields.io/npm/v/@gutenye/lib.js)](https://www.npmjs.com/package/@gutenye/lib.js) [![License](https://img.shields.io/github/license/gutenye/lib.js?color=blue)](https://github.com/gutenye/lib.js/blob/main/LICENSE) [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-blue)](https://github.com/gutenye/lib.js#-contribute)
+[![Stars](https://img.shields.io/github/stars/gutenye/lib.js?style=social)](https://github.com/gutenye/lib.js) [![License](https://img.shields.io/github/license/gutenye/lib.js?color=blue)](https://github.com/gutenye/lib.js/blob/main/LICENSE) [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-blue)](https://github.com/gutenye/lib.js#-contribute)
 
 Javascript utils that you can copy and paste into your projects.
 
