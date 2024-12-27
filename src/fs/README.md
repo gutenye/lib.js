@@ -2,6 +2,7 @@
 
 ## fs
 
+- From https://github.com/jprichardson/node-fs-extra
 - Drop-in replacement
 
 ```ts
