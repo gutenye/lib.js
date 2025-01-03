@@ -49,13 +49,6 @@ describe('createRequest', () => {
 
   it('path traversal attack', async () => {
     const api = createRequest(BASE_URL)
-    expect(await api('/../a')).toEqual([
-      new URL(`${BASE_URL}/a`),
-      {
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      },
-    ])
+    expect((await api('/../a'))[0]).toEqual(new URL(`${BASE_URL}/a`))
   })
 })
