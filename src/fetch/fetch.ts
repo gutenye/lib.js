@@ -37,7 +37,7 @@ export function createRequest(baseUrl: string) {
   ) {
     const newInput =
       typeof input === 'string' && input.startsWith('/')
-        ? `${baseUrl}${input}`
+        ? new URL(input, baseUrl)
         : input
     return request(newInput, options)
   }

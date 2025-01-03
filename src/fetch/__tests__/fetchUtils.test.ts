@@ -34,14 +34,28 @@ describe('request', () => {
   })
 })
 
-describe('createRequest', async () => {
-  const api = createRequest(BASE_URL)
-  expect(await api('/a')).toEqual([
-    `${BASE_URL}/a`,
-    {
-      headers: {
-        'Content-Type': 'application/json',
+describe('createRequest', () => {
+  it('works', async () => {
+    const api = createRequest(BASE_URL)
+    expect(await api('/a')).toEqual([
+      new URL(`${BASE_URL}/a`),
+      {
+        headers: {
+          'Content-Type': 'application/json',
+        },
       },
-    },
-  ])
+    ])
+  })
+
+  it('path traversal attack', async () => {
+    const api = createRequest(BASE_URL)
+    expect(await api('/../a')).toEqual([
+      new URL(`${BASE_URL}/a`),
+      {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      },
+    ])
+  })
 })
