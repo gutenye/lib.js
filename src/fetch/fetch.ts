@@ -35,9 +35,10 @@ export function createRequest(baseUrl: string) {
     input: FetchArgs[0],
     options?: FetchArgs[1],
   ) {
+    const newBaseUrl = baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`
     const newInput =
       typeof input === 'string' && input.startsWith('/')
-        ? new URL(input, baseUrl)
+        ? new URL(input.slice(1), newBaseUrl)
         : input
     return request(newInput, options)
   }

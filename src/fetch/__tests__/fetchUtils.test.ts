@@ -1,10 +1,10 @@
 import { describe, expect, it, spyOn } from 'bun:test'
 import { createRequest, request } from '../fetch'
 
-const BASE_URL = 'https://example.com'
+const BASE_URL = 'https://example.com/v1'
 
 spyOn(globalThis, 'fetch').mockImplementation(async (input, options) => {
-  const result = [input, options]
+  const result = [input.toString(), options]
   return {
     ok: true,
     json: async () => result,
@@ -38,7 +38,7 @@ describe('createRequest', () => {
   it('works', async () => {
     const api = createRequest(BASE_URL)
     expect(await api('/a')).toEqual([
-      new URL(`${BASE_URL}/a`),
+      `${BASE_URL}/a`,
       {
         headers: {
           'Content-Type': 'application/json',
@@ -49,6 +49,6 @@ describe('createRequest', () => {
 
   it('path traversal attack', async () => {
     const api = createRequest(BASE_URL)
-    expect((await api('/../a'))[0]).toEqual(new URL(`${BASE_URL}/a`))
+    expect((await api('/../../a'))[0]).toEqual(`${new URL(BASE_URL).origin}/a`)
   })
 })
