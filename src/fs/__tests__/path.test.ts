@@ -40,6 +40,19 @@ describe('replaceName', () => {
   }
 })
 
+describe('replaceExt', () => {
+  for (const [path, newExt, expected] of [
+    ['a.jpg', 'png', 'a.png'],
+    ['a', 'png', 'a.png'],
+    ['./a.jpg', 'png', 'a.png'],
+    ['/a/b.jpg', 'png', '/a/b.png'],
+  ] as const) {
+    it(path, async () => {
+      expect(pathUtils.replaceExt(path, newExt)).toEqual(expected)
+    })
+  }
+})
+
 describe('genUniquePath', () => {
   for (const [fixture, expected] of [
     ['/file.txt', '/file (1).txt'],
@@ -51,7 +64,7 @@ describe('genUniquePath', () => {
   }
 })
 
-describe('hasExit', () => {
+describe('hasExt', () => {
   for (const [path, exts, expected] of [
     ['/a.jpg', ['png', 'jpg'], true],
     ['/b.jpg', ['png'], false],

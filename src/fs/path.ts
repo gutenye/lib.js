@@ -15,6 +15,13 @@ function replaceName(path: string, name: string) {
   return nodePath.join(dir, `${name}${ext}`)
 }
 
+// replace ext
+// a.js -> a.py
+function replaceExt(path: string, newExt: string) {
+  const { dir, name } = nodePath.parse(path)
+  return nodePath.join(dir, `${name}.${newExt}`)
+}
+
 /**
  * If path exists, return a new path with a number appended to it.
  */
@@ -41,6 +48,7 @@ export default {
   ...nodePath,
   nameAddSuffix,
   replaceName,
+  replaceExt,
   genUniquePath,
   hasExt,
 }
