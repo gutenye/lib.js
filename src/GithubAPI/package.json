@@ -1,0 +1,6 @@
+{
+  "name": "github-api",
+  "dependencies": {
+    "@octokit/graphql": "^8.2.2"
+  }
+}
