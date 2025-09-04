@@ -40,3 +40,14 @@ export function isPlainObject(
       Function.prototype.toString.call(Object)
   )
 }
+
+export function mapKeysDeep(input: unknown, callback: (key: string) => string) {
+  if (Array.isArray(input)) {
+    return input.map(callback);
+  } else if (input && typeof input === 'object' && input.constructor === Object) {
+    return Object.fromEntries(
+      Object.entries(input).map(([k, v]) => [toCamel(k), mapKeysDeep(v, callback)])
+    );
+  }
+  return input;
+}
