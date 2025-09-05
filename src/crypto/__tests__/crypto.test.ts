@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test'
-import { randomNumber } from '../crypto'
+import { randomNumber } from '../randomNumber'
 
 describe('randomNumber', () => {
   it('should generate different numbers on multiple calls', () => {

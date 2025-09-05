@@ -41,12 +41,12 @@ export function isPlainObject(
   )
 }
 
-export function mapKeysDeep(input: unknown, callback: (key: string) => string) {
+export function mapKeysDeep(input: unknown, transformKey: (key: string) => string) {
   if (Array.isArray(input)) {
-    return input.map(callback);
+    return input.map(v => mapKeysDeep(v, transformKey));
   } else if (input && typeof input === 'object' && input.constructor === Object) {
     return Object.fromEntries(
-      Object.entries(input).map(([k, v]) => [toCamel(k), mapKeysDeep(v, callback)])
+      Object.entries(input).map(([k, v]) => [transformKey(k), mapKeysDeep(v, transformKey)])
     );
   }
   return input;
