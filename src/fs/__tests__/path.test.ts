@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, mock } from 'bun:test'
 import Memfs, { vol } from 'memfs'
-import pathUtils from '../path'
+import pathUtils from '../nodePath'
 
 const memfs = Memfs.fs.promises
 

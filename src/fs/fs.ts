@@ -149,7 +149,7 @@ async function lstatSafe(input: PathLike) {
  * @param {string} path - The file path to expand.
  * @returns {string} - The expanded absolute file path.
  */
-function expand(path: any) {
+function expandHome(path: any) {
   if (!path || typeof path !== 'string') {
     return path
   }
@@ -163,15 +163,23 @@ function expand(path: any) {
   return path
 }
 
+/**
+ * Expands a file path to the absolute path.
+ * Support ~ home directory
+ */
+function expandAbs(path: any) {
+  return nodePath.resolve(expandHome(path))
+}
+
+function cleanPath(path: any) {
+  return removeTrailingSlash(expandHome(path))
+}
+
 function removeTrailingSlash(path: any) {
   if (!path || typeof path !== 'string') {
     return path
   }
   return path.replace(/[\\/]+$/, '')
-}
-
-function cleanPath(path: any) {
-  return removeTrailingSlash(expand(path))
 }
 
 async function remove(path: PathLike) {
@@ -209,7 +217,8 @@ type PathLike = Parameters<typeof fs.lstat>[0]
 export default {
   ...fs,
   pathExists,
-  expand,
+  expandHome,
+  expandAbs,
   cleanPath,
   inputFile,
   outputFile,
