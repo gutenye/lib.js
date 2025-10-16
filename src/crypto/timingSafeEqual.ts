@@ -2,6 +2,9 @@ import crypto from 'node:crypto'
 
 let hmacKey: Uint8Array | undefined
 
+/**
+ *  timingSafeEqual('a', 'b')
+ */
 export function timingSafeEqual(left: string, right: string): boolean {
   // avoids unnecessary HMAC/compare delay
   if (left.length !== right.length) {
