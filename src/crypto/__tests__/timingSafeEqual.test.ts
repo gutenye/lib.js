@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test'
-import { timingSafeEqual } from '../timingSafeEqual'
+import { timingSafeEqual, timingSafeEqualSome } from '../timingSafeEqual'
 
 describe('timingSafeEqual', () => {
   it('should return true for identical strings', () => {
@@ -60,5 +60,61 @@ describe('timingSafeEqual', () => {
 
     expect(timingSafeEqual(longString, shortString)).toBe(false)
     expect(timingSafeEqual(longString, longString)).toBe(true)
+  })
+})
+
+describe('compareApiKeys', () => {
+  it('should return true when input matches an API key', () => {
+    const apiKeys = ['key1', 'key2', 'key3']
+    expect(timingSafeEqualSome(apiKeys, 'key2')).toBe(true)
+    expect(timingSafeEqualSome(apiKeys, 'key1')).toBe(true)
+    expect(timingSafeEqualSome(apiKeys, 'key3')).toBe(true)
+  })
+
+  it('should return false when input does not match any API key', () => {
+    const apiKeys = ['key1', 'key2', 'key3']
+    expect(timingSafeEqualSome(apiKeys, 'invalid')).toBe(false)
+    expect(timingSafeEqualSome(apiKeys, 'key4')).toBe(false)
+    expect(timingSafeEqualSome(apiKeys, '')).toBe(false)
+  })
+
+  it('should handle empty API keys array', () => {
+    expect(timingSafeEqualSome([], 'any-input')).toBe(false)
+  })
+
+  it('should handle empty strings in API keys', () => {
+    const apiKeys = ['', 'valid-key']
+    expect(timingSafeEqualSome(apiKeys, '')).toBe(true)
+    expect(timingSafeEqualSome(apiKeys, 'valid-key')).toBe(true)
+    expect(timingSafeEqualSome(apiKeys, 'invalid')).toBe(false)
+  })
+
+  it('should work with your example case', () => {
+    const apiKeys = ['', '']
+    const input = 'a'
+    expect(timingSafeEqualSome(apiKeys, input)).toBe(false)
+
+    // Test with empty string input (should match)
+    expect(timingSafeEqualSome(apiKeys, '')).toBe(true)
+  })
+
+  it('should be timing-safe by checking all keys', () => {
+    // This test ensures we always check all keys, not just until first match
+    const apiKeys = ['match', 'key2', 'key3', 'key4', 'key5']
+    const input = 'match'
+
+    // Should return true and have checked all keys
+    expect(timingSafeEqualSome(apiKeys, input)).toBe(true)
+
+    // Test with no match - should still check all keys
+    expect(timingSafeEqualSome(apiKeys, 'nomatch')).toBe(false)
+  })
+
+  it('should handle special characters and unicode', () => {
+    const apiKeys = ['test@#$%', '测试🚀💯', 'normal-key']
+    expect(timingSafeEqualSome(apiKeys, 'test@#$%')).toBe(true)
+    expect(timingSafeEqualSome(apiKeys, '测试🚀💯')).toBe(true)
+    expect(timingSafeEqualSome(apiKeys, 'normal-key')).toBe(true)
+    expect(timingSafeEqualSome(apiKeys, 'different')).toBe(false)
   })
 })
