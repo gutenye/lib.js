@@ -3,7 +3,7 @@ import { spawn, spawnSync } from 'node:child_process'
 export * from 'node:child_process'
 
 export function runCmdSync(cmd: string, options?: SpawnSyncArgs[2]) {
-  const newOptions = { shell: true, stdio: 'inherit', ...options }
+  const newOptions = { stdio: 'inherit', shell: true, ...options }
   const { status } = spawnSync(cmd, newOptions as SpawnSyncArgs[2])
   if (status !== 0) {
     throw new ShellError(`Command ${cmd} failed with status ${status}`, {
@@ -13,7 +13,12 @@ export function runCmdSync(cmd: string, options?: SpawnSyncArgs[2]) {
 }
 
 export function captureCmdSync(cmd: string, options?: SpawnSyncArgs[2]) {
-  const newOptions = { shell: true, encoding: 'utf8', ...options }
+  const newOptions = {
+    stdio: ['inherit', 'pipe', 'pipe'],
+    shell: true,
+    encoding: 'utf8',
+    ...options,
+  }
   const { status, stdout, stderr } = spawnSync(
     cmd,
     newOptions as SpawnSyncArgs[2],
@@ -29,7 +34,11 @@ export function captureCmdSync(cmd: string, options?: SpawnSyncArgs[2]) {
 }
 
 export async function runAndCaptureCmd(cmd: string, options?: SpawnArgs[2]) {
-  const newOptions = { shell: true, ...options }
+  const newOptions = {
+    stdio: ['inherit', 'pipe', 'pipe'],
+    shell: true,
+    ...options,
+  }
   const child = spawn(cmd, newOptions as SpawnArgs[2])
   let output = ''
   child.stdout?.on('data', (chunk) => {
@@ -58,7 +67,11 @@ export async function runAndCaptureCmdInTty(
   options?: SpawnArgs[2],
 ) {
   const { default: pty } = await import('node-pty')
-  const newOptions = { shell: true, ...options }
+  const newOptions = {
+    stdio: ['inherit', 'pipe', 'pipe'],
+    shell: true,
+    ...options,
+  }
   const child = pty.spawn('/bin/sh', ['-c', cmd], newOptions as SpawnArgs[2])
   let output = ''
   child.stdout?.on('data', (chunk: string) => {
