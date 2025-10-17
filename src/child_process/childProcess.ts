@@ -8,8 +8,6 @@ export function runCmdSync(cmd: string, options?: SpawnSyncArgs[2]) {
   if (status !== 0) {
     throw new ShellError(`Command ${cmd} failed with status ${status}`, {
       status,
-      stdout: null,
-      stderr: null,
     })
   }
 }
@@ -20,14 +18,14 @@ export function captureCmdSync(cmd: string, options?: SpawnSyncArgs[2]) {
     cmd,
     newOptions as SpawnSyncArgs[2],
   )
-  if (status !== 0) {
-    throw new ShellError(`Command ${cmd} failed with status ${status}`, {
-      status,
-      stdout: stdout as string,
-      stderr: stderr as string,
-    })
+  if (status === 0) {
+    return { stdout, stderr }
   }
-  return { stdout, stderr }
+  throw new ShellError(`Command ${cmd} failed with status ${status}`, {
+    status,
+    stdout: stdout as string,
+    stderr: stderr as string,
+  })
 }
 
 export async function runAndCaptureCmd(cmd: string, options?: SpawnArgs[2]) {
@@ -42,9 +40,15 @@ export async function runAndCaptureCmd(cmd: string, options?: SpawnArgs[2]) {
     process.stderr.write(chunk)
     output += chunk
   })
-  return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
     child.on('close', (status) => {
-      resolve({ status, output: output.trim() })
+      if (status !== 0) {
+        resolve({ output: output.trim() })
+      }
+      throw new ShellError(`Command ${cmd} failed with status ${status}`, {
+        status,
+        output,
+      })
     })
   })
 }
@@ -81,17 +85,20 @@ export class ShellError extends Error {
   status: number | null
   stdout: string | null
   stderr: string | null
+  output: string | null
 
   constructor(
     message: string,
     {
-      status,
-      stdout,
-      stderr,
+      status = null,
+      stdout = null,
+      stderr = null,
+      output = null,
     }: {
       status: number | null
-      stdout: string | null
-      stderr: string | null
+      stdout?: string | null
+      stderr?: string | null
+      output?: string | null
     },
   ) {
     super(message)
@@ -99,6 +106,7 @@ export class ShellError extends Error {
     this.status = status
     this.stdout = stdout
     this.stderr = stderr
+    this.output = output
   }
   toJSON() {
     const { name, message, stack, ...rest } = this
