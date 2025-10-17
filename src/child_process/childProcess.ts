@@ -2,8 +2,12 @@ import { spawn, spawnSync } from 'node:child_process'
 
 export * from 'node:child_process'
 
-export function runCmdSync(cmd: string, options?: SpawnSyncArgs[2]) {
+export async function runCmd(
+  cmd: string,
+  options?: SpawnSyncArgs[2],
+): Promise<void> {
   const newOptions = { stdio: 'inherit', shell: true, ...options }
+  console.log(cmd)
   const { status } = spawnSync(cmd, newOptions as SpawnSyncArgs[2])
   if (status !== 0) {
     throw new ShellError(`Command ${cmd} failed with status ${status}`, {
@@ -12,33 +16,41 @@ export function runCmdSync(cmd: string, options?: SpawnSyncArgs[2]) {
   }
 }
 
-export function captureCmdSync(cmd: string, options?: SpawnSyncArgs[2]) {
+export async function captureCmd(
+  cmd: string,
+  options?: SpawnSyncArgs[2],
+): Promise<string> {
   const newOptions = {
     stdio: ['inherit', 'pipe', 'pipe'],
     shell: true,
     encoding: 'utf8',
     ...options,
   }
+  console.log(cmd)
   const { status, stdout, stderr } = spawnSync(
     cmd,
     newOptions as SpawnSyncArgs[2],
   )
   if (status === 0) {
-    return { stdout, stderr }
+    return stdout.toString().trim()
   }
   throw new ShellError(`Command ${cmd} failed with status ${status}`, {
-    status,
-    stdout: stdout as string,
-    stderr: stderr as string,
+    status: status ?? 1,
+    stdout: stdout.toString().trim(),
+    stderr: stderr.toString().trim(),
   })
 }
 
-export async function runAndCaptureCmd(cmd: string, options?: SpawnArgs[2]) {
+export async function runAndCaptureCmd(
+  cmd: string,
+  options?: SpawnArgs[2],
+): Promise<string> {
   const newOptions = {
     stdio: ['inherit', 'pipe', 'pipe'],
     shell: true,
     ...options,
   }
+  console.log(cmd)
   const child = spawn(cmd, newOptions as SpawnArgs[2])
   let output = ''
   child.stdout?.on('data', (chunk) => {
@@ -51,11 +63,11 @@ export async function runAndCaptureCmd(cmd: string, options?: SpawnArgs[2]) {
   })
   return new Promise((resolve, reject) => {
     child.on('close', (status) => {
-      if (status !== 0) {
-        resolve({ output: output.trim() })
+      if (status === 0) {
+        resolve(output.trim())
       }
       throw new ShellError(`Command ${cmd} failed with status ${status}`, {
-        status,
+        status: status ?? 1,
         output,
       })
     })
@@ -65,13 +77,14 @@ export async function runAndCaptureCmd(cmd: string, options?: SpawnArgs[2]) {
 export async function runAndCaptureCmdInTty(
   cmd: string,
   options?: SpawnArgs[2],
-) {
+): Promise<string> {
   const { default: pty } = await import('node-pty')
   const newOptions = {
     stdio: ['inherit', 'pipe', 'pipe'],
     shell: true,
     ...options,
   }
+  console.log(cmd)
   const child = pty.spawn('/bin/sh', ['-c', cmd], newOptions as SpawnArgs[2])
   let output = ''
   child.stdout?.on('data', (chunk: string) => {
@@ -84,8 +97,13 @@ export async function runAndCaptureCmdInTty(
   })
   return new Promise((resolve) => {
     child.on('close', (status: number) => {
-      const newOutput = output.trim()
-      resolve({ status, output: newOutput })
+      if (status === 0) {
+        resolve(output.trim())
+      }
+      throw new ShellError(`Command ${cmd} failed with status ${status}`, {
+        status,
+        output,
+      })
     })
   })
 }
@@ -95,23 +113,23 @@ type SpawnArgs = Parameters<typeof spawn>
 type SpawnSyncArgs = Parameters<typeof spawnSync>
 
 export class ShellError extends Error {
-  status: number | null
-  stdout: string | null
-  stderr: string | null
-  output: string | null
+  status: number
+  stdout: string
+  stderr: string
+  output: string
 
   constructor(
     message: string,
     {
-      status = null,
-      stdout = null,
-      stderr = null,
-      output = null,
+      status = 1,
+      stdout = '',
+      stderr = '',
+      output = '',
     }: {
-      status: number | null
-      stdout?: string | null
-      stderr?: string | null
-      output?: string | null
+      status: number
+      stdout?: string
+      stderr?: string
+      output?: string
     },
   ) {
     super(message)
