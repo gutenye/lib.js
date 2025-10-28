@@ -2,9 +2,12 @@
   "name": "@gutenye/lib.js",
   "private": "true",
   "type": "module",
-  "workspaces": ["src/*"],
+  "workspaces": [
+    "src/*"
+  ],
   "scripts": {
     "test": "bun test",
+    "test:watch": "bun test --watch",
     "lint": "biome check --fix",
     "lint:ci": "biome ci --reporter=github"
   },
