@@ -11,7 +11,7 @@ export async function runCmd(
   const { status } = spawnSync(cmd, newOptions as SpawnSyncOptions)
   if (status !== 0) {
     throw new ShellError(`Command ${cmd} failed with status ${status}`, {
-      status,
+      status: status ?? 1,
     })
   }
 }
@@ -52,24 +52,30 @@ export async function runAndCaptureCmd(
   }
   console.log(cmd)
   const child = spawn(cmd, newOptions as SpawnOptions)
-  let output = ''
+  let stdout = ''
+  let stderr = ''
   child.stdout?.on('data', (chunk) => {
     process.stdout.write(chunk)
-    output += chunk
+    stdout += chunk
   })
   child.stderr?.on('data', (chunk) => {
     process.stderr.write(chunk)
-    output += chunk
+    stderr += chunk
   })
   return new Promise((resolve, reject) => {
     child.on('close', (status) => {
+      stdout = stdout.trim()
+      stderr = stderr.trim()
       if (status === 0) {
-        resolve(output.trim())
+        resolve(stdout)
       }
-      throw new ShellError(`Command ${cmd} failed with status ${status}`, {
-        status: status ?? 1,
-        output,
-      })
+      reject(
+        new ShellError(`Command ${cmd} failed with status ${status}`, {
+          status: status ?? 1,
+          stdout,
+          stderr,
+        }),
+      )
     })
   })
 }
@@ -86,23 +92,27 @@ export async function runAndCaptureCmdInTty(
   }
   console.log(cmd)
   const child = pty.spawn('/bin/sh', ['-c', cmd], newOptions as SpawnOptions)
-  let output = ''
+  let stdout = ''
+  let stderr = ''
   child.stdout?.on('data', (chunk: string) => {
     process.stdout.write(chunk)
-    output += chunk
+    stdout += chunk
   })
   child.stderr?.on('data', (chunk: string) => {
     process.stderr.write(chunk)
-    output += chunk
+    stderr += chunk
   })
   return new Promise((resolve) => {
+    stdout = stdout.trim()
+    stderr = stderr.trim()
     child.on('close', (status: number) => {
       if (status === 0) {
-        resolve(output.trim())
+        resolve(stdout)
       }
       throw new ShellError(`Command ${cmd} failed with status ${status}`, {
         status,
-        output,
+        stdout,
+        stderr,
       })
     })
   })
@@ -120,7 +130,6 @@ export class ShellError extends Error {
   status: number
   stdout: string
   stderr: string
-  output: string
 
   constructor(
     message: string,
@@ -128,12 +137,10 @@ export class ShellError extends Error {
       status = 1,
       stdout = '',
       stderr = '',
-      output = '',
     }: {
       status: number
       stdout?: string
       stderr?: string
-      output?: string
     },
   ) {
     super(message)
@@ -141,7 +148,6 @@ export class ShellError extends Error {
     this.status = status
     this.stdout = stdout
     this.stderr = stderr
-    this.output = output
   }
   toJSON() {
     const { name, message, stack, ...rest } = this

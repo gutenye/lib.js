@@ -2,9 +2,9 @@ export function mergeStreams(streamA: ReadableStream, streamB: ReadableStream) {
   const readerA = streamA.pipeThrough(new TextDecoderStream()).getReader()
   const readerB = streamB.pipeThrough(new TextDecoderStream()).getReader()
 
-  return new ReadableStream({
+  return new ReadableStream<string>({
     start(controller) {
-      const pump = async (reader: ReadableStreamDefaultReader) => {
+      const pump = async (reader: ReadableStreamDefaultReader<string>) => {
         for (;;) {
           const { done, value } = await reader.read()
           if (done) break

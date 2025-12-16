@@ -20,34 +20,59 @@ export function isString(value: unknown): value is string {
   return typeof value === 'string'
 }
 
-export function isPlainObject(
-  value: unknown,
-): value is Record<string, unknown> {
-  if (!(value !== null && typeof value === 'object')) {
-    return false
-  }
-  const proto = Object.getPrototypeOf(value)
-  if (proto === null) {
-    return true
-  }
-  const Ctor =
-    Object.prototype.hasOwnProperty.call(proto, 'constructor') &&
-    proto.constructor
-  return (
-    typeof Ctor === 'function' &&
-    Ctor instanceof Ctor &&
-    Function.prototype.toString.call(Ctor) ===
-      Function.prototype.toString.call(Object)
-  )
+export function isPlainArray(value: unknown): value is Array<unknown> {
+  return Array.isArray(value) && value.length === Object.keys(value).length
 }
 
-export function mapKeysDeep(input: unknown, transformKey: (key: string) => string) {
-  if (Array.isArray(input)) {
-    return input.map(v => mapKeysDeep(v, transformKey));
-  } else if (input && typeof input === 'object' && input.constructor === Object) {
-    return Object.fromEntries(
-      Object.entries(input).map(([k, v]) => [transformKey(k), mapKeysDeep(v, transformKey)])
-    );
+// Copied from: https://github.com/jonschlinkert/is-plain-object
+export function isPlainObject(o: any): o is Record<PropertyKey, unknown> {
+  if (Object.prototype.toString.call(o) !== '[object Object]') {
+    return false
   }
-  return input;
+
+  // If has no constructor
+  const ctor = o.constructor
+  if (ctor === undefined) {
+    return true
+  }
+
+  // If has modified prototype
+  const prot = ctor.prototype
+  if (Object.prototype.toString.call(prot) !== '[object Object]') {
+    return false
+  }
+
+  // If constructor does not have an Object-specific method
+  if (!Object.hasOwn(prot, 'isPrototypeOf')) {
+    return false
+  }
+
+  // Handles Objects created by Object.create(<arbitrary prototype>)
+  if (Object.getPrototypeOf(o) !== Object.prototype) {
+    return false
+  }
+
+  // Most likely a plain Object
+  return true
+}
+
+export function mapKeysDeep(
+  input: unknown,
+  transformKey: (key: string) => string,
+) {
+  if (Array.isArray(input)) {
+    return input.map((v) => mapKeysDeep(v, transformKey))
+  } else if (
+    input &&
+    typeof input === 'object' &&
+    input.constructor === Object
+  ) {
+    return Object.fromEntries(
+      Object.entries(input).map(([k, v]) => [
+        transformKey(k),
+        mapKeysDeep(v, transformKey),
+      ]),
+    )
+  }
+  return input
 }

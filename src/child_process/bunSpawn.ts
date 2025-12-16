@@ -43,66 +43,48 @@ export async function runAndCaptureCmd(
   cmd: string,
   options?: SpawnSyncOptions,
 ): Promise<string> {
-  const newOptions = {
-    stdio: ['inherit', 'pipe', 'pipe'],
-    shell: true,
-    ...options,
-  }
   console.log(cmd)
-  const child = Bun.spawn(cmd, newOptions as SpawnOptions)
-  let output = ''
-  child.stdout?.on('data', (chunk) => {
-    process.stdout.write(chunk)
-    output += chunk
-  })
-  child.stderr?.on('data', (chunk) => {
-    process.stderr.write(chunk)
-    output += chunk
-  })
-  return new Promise((resolve, reject) => {
-    child.on('close', (status) => {
-      if (status === 0) {
-        resolve(output.trim())
-      }
-      throw new ShellError(`Command ${cmd} failed with status ${status}`, {
-        status: status ?? 1,
-        output,
-      })
-    })
-  })
-}
 
-export async function runAndCaptureCmdInTty(
-  cmd: string,
-  options?: SpawnArgs[2],
-): Promise<string> {
-  const { default: pty } = await import('node-pty')
   const newOptions = {
     stdio: ['inherit', 'pipe', 'pipe'],
-    shell: true,
     ...options,
   }
-  console.log(cmd)
-  const child = pty.spawn('/bin/sh', ['-c', cmd], newOptions as SpawnArgs[2])
-  let output = ''
-  child.stdout?.on('data', (chunk: string) => {
-    process.stdout.write(chunk)
-    output += chunk
-  })
-  child.stderr?.on('data', (chunk: string) => {
-    process.stderr.write(chunk)
-    output += chunk
-  })
-  return new Promise((resolve) => {
-    child.on('close', (status: number) => {
-      if (status === 0) {
-        resolve(output.trim())
+  const child = Bun.spawn(
+    ['/bin/sh', '-c', cmd],
+    newOptions as SpawnSyncOptions,
+  )
+
+  let stdout = ''
+  let stderr = ''
+  await Promise.all([
+    (async () => {
+      for await (const chunk of child.stdout.pipeThrough(
+        new TextDecoderStream(),
+      )) {
+        process.stdout.write(chunk)
+        stdout += chunk
       }
-      throw new ShellError(`Command ${cmd} failed with status ${status}`, {
-        status,
-        output,
-      })
-    })
+    })(),
+    (async () => {
+      for await (const chunk of child.stderr.pipeThrough(
+        new TextDecoderStream(),
+      )) {
+        process.stderr.write(chunk)
+        stderr += chunk
+      }
+    })(),
+  ])
+
+  const exitCode = await child.exited
+  stdout = stdout.trim()
+  stderr = stderr.trim()
+  if (exitCode === 0) {
+    return stdout
+  }
+  throw new ShellError(`Command ${cmd} failed with status ${exitCode}`, {
+    status: exitCode,
+    stdout,
+    stderr,
   })
 }
 
@@ -114,7 +96,6 @@ export class ShellError extends Error {
   status: number
   stdout: string
   stderr: string
-  output: string
 
   constructor(
     message: string,
@@ -122,12 +103,10 @@ export class ShellError extends Error {
       status = 1,
       stdout = '',
       stderr = '',
-      output = '',
     }: {
       status: number
       stdout?: string
       stderr?: string
-      output?: string
     },
   ) {
     super(message)
@@ -135,7 +114,6 @@ export class ShellError extends Error {
     this.status = status
     this.stdout = stdout
     this.stderr = stderr
-    this.output = output
   }
   toJSON() {
     const { name, message, stack, ...rest } = this
