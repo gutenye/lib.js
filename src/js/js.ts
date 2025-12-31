@@ -1,3 +1,5 @@
+// https://github.com/lodash/lodash/tree/es
+
 export async function delay(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms))
 }
@@ -75,4 +77,13 @@ export function mapKeysDeep(
     )
   }
   return input
+}
+
+export function mapValues<T extends Record<string, any>, R>(
+  obj: T,
+  fn: (value: T[keyof T]) => R
+): Record<keyof T, R> {
+  return Object.fromEntries(
+    Object.entries(obj).map(([k, v]) => [k, fn(v)])
+  ) as Record<keyof T, R>;
 }
