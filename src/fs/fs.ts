@@ -186,8 +186,8 @@ async function remove(path: PathLike) {
   return fs.rm(cleanPath(path), { recursive: true, force: true })
 }
 
-async function copy() {
-  throw new Error('NotImplmeented')
+async function copy(source: CpArgs[0], destination: CpArgs[1]) {
+  return fs.cp(source, destination, { recursive: true })
 }
 
 async function move(rawSrc: PathLike, rawDest: PathLike) {
@@ -213,6 +213,7 @@ async function mkdirp(path: PathLike) {
 type WriteFileArgs = Parameters<typeof fs.writeFile>
 type ReadFileArgs = Parameters<typeof fs.readFile>
 type PathLike = Parameters<typeof fs.lstat>[0]
+type CpArgs = Parameters<typeof fs.cp>
 
 export default {
   ...fs,
