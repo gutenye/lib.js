@@ -177,7 +177,7 @@ describe('expand', () => {
     [true, true],
   ]) {
     it(String(fixture), () => {
-      expect(fsUtils.expand(fixture)).toEqual(expected)
+      expect(fsUtils.expandHome(fixture)).toEqual(expected)
     })
   }
 })

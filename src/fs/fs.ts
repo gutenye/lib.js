@@ -3,7 +3,9 @@ import os from 'node:os'
 import nodePath from 'node:path'
 
 /**
- * Check path exists
+ * Check if a path exists.
+ * @param path - Path to check
+ * @returns true if path exists, false otherwise
  */
 async function pathExists(path: string) {
   try {
@@ -18,7 +20,10 @@ async function pathExists(path: string) {
 }
 
 /**
- * - file not exists: returns undefined
+ * Read a file, returning undefined if it doesn't exist.
+ * @param path - File path to read
+ * @param options - Read options (encoding, etc.)
+ * @returns File contents, or undefined if not found
  */
 async function inputFile(path: ReadFileArgs[0], options?: ReadFileArgs[1]) {
   try {
@@ -32,7 +37,10 @@ async function inputFile(path: ReadFileArgs[0], options?: ReadFileArgs[1]) {
 }
 
 /**
- * - Auto create missing dirs
+ * Write a file, auto-creating missing parent directories.
+ * @param rawPath - File path to write
+ * @param data - Data to write
+ * @param options - Write options (encoding, etc.)
  */
 async function outputFile(
   rawPath: WriteFileArgs[0],
@@ -51,9 +59,10 @@ async function outputFile(
 // emptyDir: readdirSync(dir).forEach(v => fs.rmSync(`${dir}/${v}`, { recursive: true })
 
 /**
- * Walk dir
+ * Recursively walk a directory, yielding file paths.
+ * @param rawDir - Directory to walk
+ * @returns Async generator of file paths
  */
-
 async function* walk(rawDir: string): AsyncGenerator<string> {
   const dir = cleanPath(rawDir)
   for await (const d of await fs.opendir(dir)) {
@@ -64,7 +73,10 @@ async function* walk(rawDir: string): AsyncGenerator<string> {
 }
 
 /**
- * - uses inputFile
+ * Read and parse a JSON file, returning undefined if not found.
+ * @param input - File path to read
+ * @param options - Read options (encoding, etc.)
+ * @returns Parsed JSON, or undefined if not found
  */
 async function inputJson(input: ReadFileArgs[0], options?: ReadFileArgs[1]) {
   const text = (await inputFile(cleanPath(input), options || 'utf8')) as
@@ -83,8 +95,11 @@ async function inputJson(input: ReadFileArgs[0], options?: ReadFileArgs[1]) {
   }
 }
 
-/*
- * - uses readFile
+/**
+ * Read and parse a JSON file, throwing if not found.
+ * @param input - File path to read
+ * @param options - Read options (encoding, etc.)
+ * @returns Parsed JSON
  */
 async function readJson(input: ReadFileArgs[0], options?: ReadFileArgs[1]) {
   const text = (await fs.readFile(
@@ -102,7 +117,9 @@ async function readJson(input: ReadFileArgs[0], options?: ReadFileArgs[1]) {
 }
 
 /**
- * isSymlink
+ * Check if a path is a symbolic link.
+ * @param input - Path to check
+ * @returns true if symbolic link, false otherwise
  */
 async function isSymlink(input: PathLike) {
   const stat = await lstatSafe(input)
@@ -110,7 +127,9 @@ async function isSymlink(input: PathLike) {
 }
 
 /**
- * isFile
+ * Check if a path is a regular file.
+ * @param input - Path to check
+ * @returns true if regular file, false otherwise
  */
 async function isFile(input: PathLike) {
   const stat = await lstatSafe(input)
@@ -118,7 +137,9 @@ async function isFile(input: PathLike) {
 }
 
 /**
- * isDir
+ * Check if a path is a directory.
+ * @param input - Path to check
+ * @returns true if directory, false otherwise
  */
 async function isDir(input: PathLike) {
   const stat = await lstatSafe(input)
@@ -126,13 +147,19 @@ async function isDir(input: PathLike) {
 }
 
 /**
- * TS check if error is a Node Error
+ * Type guard for Node.js errors with an error code.
+ * @param error - Error to check
+ * @returns true if error is a NodeJS.ErrnoException
  */
 function isNodeError(error: unknown): error is NodeJS.ErrnoException {
   return error instanceof Error && 'code' in error
 }
 
-// ignore ENOENT
+/**
+ * lstat that returns undefined instead of throwing on ENOENT.
+ * @param input - Path to stat
+ * @returns File stats, or undefined if not found
+ */
 async function lstatSafe(input: PathLike) {
   try {
     return await fs.lstat(cleanPath(input))
@@ -145,9 +172,9 @@ async function lstatSafe(input: PathLike) {
 }
 
 /**
- * Expands a file path that starts with '~' to the absolute path of the home directory.
- * @param {string} path - The file path to expand.
- * @returns {string} - The expanded absolute file path.
+ * Expand ~ to the home directory.
+ * @param path - Path to expand
+ * @returns Expanded path
  */
 function expandHome(path: any) {
   if (!path || typeof path !== 'string') {
@@ -164,17 +191,28 @@ function expandHome(path: any) {
 }
 
 /**
- * Expands a file path to the absolute path.
- * Support ~ home directory
+ * Resolve a path to absolute, expanding ~ to home directory.
+ * @param path - Path to resolve
+ * @returns Absolute path
  */
 function expandAbs(path: any) {
   return nodePath.resolve(expandHome(path))
 }
 
+/**
+ * Expand ~ and remove trailing slashes.
+ * @param path - Path to clean
+ * @returns Cleaned path
+ */
 function cleanPath(path: any) {
   return removeTrailingSlash(expandHome(path))
 }
 
+/**
+ * Remove trailing slashes from a path.
+ * @param path - Path to clean
+ * @returns Path without trailing slashes
+ */
 function removeTrailingSlash(path: any) {
   if (!path || typeof path !== 'string') {
     return path
@@ -182,34 +220,84 @@ function removeTrailingSlash(path: any) {
   return path.replace(/[\\/]+$/, '')
 }
 
+/**
+ * Remove a file or directory recursively.
+ * @param path - Path to remove
+ */
 async function remove(path: PathLike) {
   return fs.rm(cleanPath(path), { recursive: true, force: true })
 }
 
-async function copy(source: CpArgs[0], destination: CpArgs[1]) {
-  return fs.cp(source, destination, { recursive: true })
+/**
+ * Copy a file or directory recursively, creating missing dest directories.
+ * @param rawSrc - Source path
+ * @param rawDest - Destination path
+ */
+async function copy(rawSrc: PathLike, rawDest: PathLike) {
+  const dest = cleanPath(rawDest)
+  await makeMissingDirs(dest)
+  return fs.cp(cleanPath(rawSrc), dest, { recursive: true })
 }
 
-async function move(rawSrc: PathLike, rawDest: PathLike) {
+/**
+ * Copy a single file, creating missing dest directories.
+ * @param rawSrc - Source file path
+ * @param rawDest - Destination file path
+ */
+async function copyFile(rawSrc: PathLike, rawDest: PathLike) {
   const src = cleanPath(rawSrc)
   const dest = cleanPath(rawDest)
   await makeMissingDirs(dest)
-  return fs.rename(src, dest)
+  try {
+    return await fs.cp(src, dest)
+  } catch (error) {
+    // memfs doesn't support fs.cp
+    if (error instanceof Error && error.message === 'Not implemented') {
+      await fs.writeFile(dest, await fs.readFile(src))
+      const { mode } = await fs.stat(src)
+      await fs.chmod(dest, mode)
+      return
+    }
+    throw error
+  }
 }
 
+/**
+ * Move/rename a file or directory, creating missing dest directories.
+ * @param rawSrc - Source path
+ * @param rawDest - Destination path
+ */
+async function move(rawSrc: PathLike, rawDest: PathLike) {
+  const dest = cleanPath(rawDest)
+  await makeMissingDirs(dest)
+  return fs.rename(cleanPath(rawSrc), dest)
+}
+
+/**
+ * Create parent directories for a path.
+ * @param rawPath - Path whose parent dirs to create
+ */
 async function makeMissingDirs(rawPath: PathLike) {
   if (typeof rawPath !== 'string') {
     return
   }
   const path = cleanPath(rawPath)
   const parent = nodePath.dirname(path)
-  return mkdirp(parent)
+  return mkdir(parent)
 }
 
-async function mkdirp(path: PathLike) {
+/**
+ * Create a directory recursively.
+ * @param path - Directory path to create
+ */
+async function mkdir(path: PathLike) {
   return fs.mkdir(path, { recursive: true })
 }
 
+/**
+ * Ensure a directory exists and is empty, creating it if missing.
+ * @param path - Directory path
+ */
 async function ensureDirEmpty(path: string) {
   const cleaned = cleanPath(path)
   try {
@@ -219,7 +307,7 @@ async function ensureDirEmpty(path: string) {
     }
   } catch (error) {
     if (isNodeError(error) && error.code === 'ENOENT') {
-      await mkdirp(cleaned)
+      await mkdir(cleaned)
       return
     }
     throw error
@@ -229,7 +317,6 @@ async function ensureDirEmpty(path: string) {
 type WriteFileArgs = Parameters<typeof fs.writeFile>
 type ReadFileArgs = Parameters<typeof fs.readFile>
 type PathLike = Parameters<typeof fs.lstat>[0]
-type CpArgs = Parameters<typeof fs.cp>
 
 export default {
   ...fs,
@@ -248,7 +335,8 @@ export default {
   isSymlink,
   remove,
   copy,
+  copyFile,
   move,
-  mkdirp,
+  mkdir,
   ensureDirEmpty,
 }
