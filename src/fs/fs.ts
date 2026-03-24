@@ -210,6 +210,22 @@ async function mkdirp(path: PathLike) {
   return fs.mkdir(path, { recursive: true })
 }
 
+async function ensureDirEmpty(path: string) {
+  const cleaned = cleanPath(path)
+  try {
+    const files = await fs.readdir(cleaned)
+    if (files.length > 0) {
+      throw `Project directory is not empty: '${path}'`
+    }
+  } catch (error) {
+    if (isNodeError(error) && error.code === 'ENOENT') {
+      await mkdirp(cleaned)
+      return
+    }
+    throw error
+  }
+}
+
 type WriteFileArgs = Parameters<typeof fs.writeFile>
 type ReadFileArgs = Parameters<typeof fs.readFile>
 type PathLike = Parameters<typeof fs.lstat>[0]
@@ -234,4 +250,5 @@ export default {
   copy,
   move,
   mkdirp,
+  ensureDirEmpty,
 }
