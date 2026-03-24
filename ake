@@ -1,20 +1,22 @@
-await mixins('package-manager', 'test')
-
-globalThis.PACKAGE_MANAGER = 'bun'
+#!/usr/bin/env bun
 
 const HELP = `
 `
 
-app
-  .name(PROJECT_NAME)
-  .enableCompletion()
-  .addHelpText('after', HELP.trimEnd())
+import { $, app } from '@gutenye/script.js'
 
-app
-  .command('cmd1 [file]')
-  .description('Desc')
-  .argument('[file]', 'Desc', 'default')
-  .addArgument(new app.Argument('[file]').choices(['file1']))
-  .option('-o, --option1 [value]', 'Desc', 'default')
-  .addOption(new app.Option('--option2 [value]').choices(['value1']))
-  .action(async () => { })
+app.help(HELP)
+
+app.cmd('tw', '[Test] Run tests in watch mode').add(({ argv }) => {
+  $`bun run test:watch ${argv}`
+})
+
+app.cmd('t', '[Test] Run tests once').add(({ argv }) => {
+  $`bun run test ${argv}`
+})
+
+app.cmd('l', '[Test] Run lint').add(({ argv }) => {
+  $`bun run lint ${argv}`
+})
+
+await app.run()
