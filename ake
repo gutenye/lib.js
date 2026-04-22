@@ -1,22 +1,20 @@
 #!/usr/bin/env bun
 
+import { $, app } from "@gutenye/script.js";
+
 const HELP = `
-`
+`;
 
-import { $, app } from '@gutenye/script.js'
+app.help(HELP);
 
-app.help(HELP)
+app.cmd("tw", "[Test] Run tests in watch mode").add(async ({ argv }) => {
+  await $`bun run test:watch ${argv}`;
+});
 
-app.cmd('tw', '[Test] Run tests in watch mode').add(({ argv }) => {
-  $`bun run test:watch ${argv}`
-})
+app.cmd("t", "[Test] Run tests once").add(async ({ argv }) => {
+  await $`bun run test ${argv}`;
+});
 
-app.cmd('t', '[Test] Run tests once').add(({ argv }) => {
-  $`bun run test ${argv}`
-})
-
-app.cmd('l', '[Test] Run lint').add(({ argv }) => {
-  $`bun run lint ${argv}`
-})
-
-await app.run()
+app.cmd("l", "[Test] Run lint").add(async ({ argv }) => {
+  await $`bun run lint ${argv}`;
+});
